@@ -4,15 +4,16 @@ partial('navbar');
 ?>
 <div class="container">
     <form method="GET" action="/admin/users" class="filters">
-        <input name="name" type="text">
-        <select name="role">
-            <option value="all">Все роли</option>
-            <option value="user">Пользователь</option>
-            <option value="admin">Администратор</option>
+        <input name="name" type="text" value="<?= request()->getQueryString('name', '') ?>">
+        <select name="is_admin">
+            <option value="" <?= request()->getQueryInt('is_admin') === null ? 'selected' : ''?>>Все роли</option>
+            <option value="0" <?= request()->getQueryInt('is_admin') === 0 ? 'selected' : ''?>>Пользователь</option>
+            <option value="1" <?= request()->getQueryInt('is_admin') === 1 ? 'selected' : ''?>>Администратор</option>
         </select>
-        <select name="status">
-            <option value="all">Все статусы</option>
-            <option value="blocked">Заблокированные</option>
+        <select name="is_blocked">
+            <option value="" <?= request()->getQueryInt('is_blocked') === null ? 'selected' : ''?>>Все статусы</option>
+            <option value="0" <?= request()->getQueryInt('is_blocked') === 0 ? 'selected' : ''?>>Незаблокированные</option>
+            <option value="1" <?= request()->getQueryInt('is_blocked') === 1 ? 'selected' : ''?>>Заблокированные</option>
         </select>
         <button type="submit" class="btn white-btn">Поиск</button>
     </form>
@@ -37,23 +38,24 @@ partial('navbar');
                                     <img src="<?= avatarSrc($user['avatar']) ?>" class="avatar-image">
                                 </div>
                                 <div class="user-name">
-                                    <?= $user['name'] ?>
+                                    <?= h($user['name']) ?>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <?= $user['phone'] ?>
+                            <?= h($user['phone']) ?>
                         </td>
                         <td>
-                            <?= $user['email'] ?>
+                            <?= h($user['email']) ?>
                         </td>
                         <td>
                             <?= $user['is_admin'] ? 'Администратор' : 'Пользователь' ?>
                         </td>
                         <td>
-                            <?= $user['created_at'] ?>
+                            <?= h($user['created_at']) ?>
                         </td>
                         <td class="actions">
+                            <a class="btn dark-btn" href="">Открыть</a>
                             <a class="btn dark-btn" href="">Заблокировать</a>
                             <a class="btn dark-btn" href="">Удалить</a>
                         </td>

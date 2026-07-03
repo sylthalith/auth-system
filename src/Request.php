@@ -17,8 +17,29 @@ class Request
         return parse_url($_SERVER['REQUEST_URI'])['path'] . '?' . http_build_query($get);
     }
 
-    public function getQueryInt(string $key, int $default): int
+    public function getQueryInt(string $key, ?int $default = null): ?int
     {
-        return isset($_GET[$key]) ? (int) $_GET[$key] : $default;
+        if (isset($_GET[$key]) && $_GET[$key] !== '') {
+            return (int) $_GET[$key];
+        }
+
+        if ($default !== null) {
+            return $default;
+        }
+
+        return null;
+    }
+
+    public function getQueryString(string $key, ?string $default = null): ?string
+    {
+        if (isset($_GET[$key]) && $_GET[$key] !== '') {
+            return $_GET[$key];
+        }
+
+        if ($default !== null) {
+            return $default;
+        }
+
+        return null;
     }
 }

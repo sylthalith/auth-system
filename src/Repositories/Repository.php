@@ -50,10 +50,9 @@ abstract class Repository
     {
         $table = $this->table;
 
-        $whereClause = $this->buildWhereClause($fields);
+        [$whereClause, $params] = $this->buildWhereClause($fields);
 
         $sql = "SELECT * FROM $table WHERE $whereClause";
-        $params = array_values($fields);
 
         return [$sql, $params];
     }
@@ -72,11 +71,11 @@ abstract class Repository
     {
         $table = $this->table;
 
-        $setClause = $this->buildSetClause($data);
-        $whereClause = $this->buildWhereClause($fields);
+        [$setClause, $setParams] = $this->buildSetClause($data);
+        [$whereClause, $whereParams] = $this->buildWhereClause($fields);
 
         $sql = "UPDATE $table SET $setClause WHERE $whereClause";
-        $params = [...array_values($data), ...array_values($fields)];
+        $params = [...$setParams, ...$whereParams];
 
         $this->exec($sql, $params);
     }
@@ -85,45 +84,77 @@ abstract class Repository
     {
         $table = $this->table;
 
-        $whereClause = $this->buildWhereClause($fields);
+        [$whereClause, $params] = $this->buildWhereClause($fields);
 
         $sql = "DELETE FROM $table WHERE $whereClause";
-        $params = array_values($fields);
 
         $this->exec($sql, $params);
     }
 
-    public function count(): int
+    public function count(array $filters = []): int
     {
         $table = $this->table;
 
-        return (int) $this->exec("SELECT COUNT(*) FROM $table")->fetchColumn();
+        $sql = "SELECT COUNT(*) FROM $table";
+        $params = [];
+
+        if ($filters) {
+            [$whereClause, $whereParams] = $this->buildWhereClause($filters);
+            $sql .= " WHERE $whereClause";
+            $params = array_merge($params, $whereParams);
+        }
+
+        return (int) $this->exec($sql, $params)->fetchColumn();
     }
 
-    public function getPaginated(int $limit, int $offset): array
+    public function getPaginated(int $limit, int $offset, array $filters = []): array
     {
         $table = $this->table;
 
-        return $this->query("SELECT * FROM $table LIMIT ? OFFSET ?", [$limit, $offset]);
+        $sql = "SELECT * FROM $table";
+        $params = [];
+
+        if ($filters) {
+            [$whereClause, $whereParams] = $this->buildWhereClause($filters);
+            $sql .= " WHERE $whereClause";
+            $params = array_merge($params, $whereParams);
+        }
+
+        $sql .=  " LIMIT ? OFFSET ?";
+        $params[] = $limit;
+        $params[] = $offset;
+
+        return $this->query($sql, $params);
     }
 
-    private function buildSetClause(array $data): string
+    private function buildSetClause(array $data): array
     {
-        $sets = $this->buildPairs($data);
+        $sql = implode(', ', array_map(fn($field) => "$field = ?", array_keys($data)));
+        $params = array_values($data);
 
-        return implode(', ', $sets);
+        return [$sql, $params];
     }
 
-    private function buildWhereClause(array $fields): string
+    private function buildWhereClause(array $filters): array
     {
-        $conditions = $this->buildPairs($fields);
+        $conditions = [];
+        $params = [];
 
-        return implode(' AND ', $conditions);
-    }
+        foreach ($filters as $field => $value) {
+            if ($field === 'name') {
+                $conditions[] = "$field LIKE ?";
+                $params[] = "%$value%";
 
-    private function buildPairs(array $data): array
-    {
-        return array_map(fn($field) => "$field = ?", array_keys($data));
+                continue;
+            }
+
+            $conditions[] = "$field = ?";
+            $params[] = $value;
+        }
+
+        $sql = implode(' AND ', $conditions);
+
+        return [$sql, $params];
     }
 
     private function generateQuestionMarks(int $count): string

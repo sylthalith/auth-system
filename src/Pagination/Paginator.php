@@ -14,8 +14,9 @@ class Paginator
         private int $limit,
         int $page,
         private int $size = 3,
+        private array $filters = [],
     ) {
-        $this->lastPageNumber = ceil($this->repository->count() / $this->limit) - 1;
+        $this->lastPageNumber = ceil($this->repository->count($filters) / $this->limit) - 1;
 
         if ($page > $this->lastPageNumber) {
             $this->page = $this->lastPageNumber;
@@ -28,7 +29,7 @@ class Paginator
 
     public function getItems(): array
     {
-        return $this->repository->getPaginated($this->limit, $this->page * $this->limit);
+        return $this->repository->getPaginated($this->limit, $this->page * $this->limit, $this->filters);
     }
 
     public function has(int $index): bool
@@ -70,6 +71,10 @@ class Paginator
 
     public function getDisplayPages(): array
     {
+        if ($this->lastPageNumber === 0) {
+            return [];
+        }
+
         $start = -$this->size + 1;
         $end = $this->size - 1;
 

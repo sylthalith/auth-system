@@ -8,6 +8,11 @@
                 <li class="nav-links-item">
                     <a class="nav-link" href="/logout">Выйти</a>
                 </li>
+                <?php if (isAdmin()): ?>
+                    <li class="nav-links-item">
+                        <a class="nav-link" href="/admin/dashboard">Панель</a>
+                    </li>
+                <?php endif ?>
             <?php else: ?>
                 <li class="nav-links-item">
                     <a class="nav-link" href="/">Главная</a>
